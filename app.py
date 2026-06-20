@@ -9,7 +9,9 @@ from langchain_cohere import CohereEmbeddings, ChatCohere
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client.models import Distance, VectorParams
 
+
 load_dotenv()
+co = cohere.Client(os.getenv('COHERE_API_KEY'))
 
 def get_text(pdf_files, url_input):
     text = ''
@@ -48,7 +50,8 @@ def get_vector_store(chunk_text):
     vectorStore = QdrantVectorStore.from_texts(
         texts=chunk_text,
         embedding=embeddings,
-        path= 'qdrant_storage',
+        location=':memory:',
+        #path= 'qdrant_storage',
         collection_name='rag_collection',
         force_recreate=True
     )
@@ -64,18 +67,60 @@ def get_user_que(user_que, vector_store):
     )
     
     # search vector database
-    search_database = vector_store.similarity_search(user_que, k=4)
+    docs = vector_store.similarity_search(user_que, k = 15)
     
-    # combine matching into chunk
-    context = ''
-    for doc in search_database:
-        context += doc.page_content + "\n\n"
+    re_ranked = co.rerank(
+        query = user_que,
+        documents= [doc.page_content for doc in docs],
+        model = 'rerank-v4.0-pro',
+        top_n = 4
+    )
+    
+    best_docs = [docs[r.index] for r in re_ranked.results]
+    
+    # build documents for citations 
+    
+    document = [
         
-    final_input = f"Context:\n{context}\n\nQuestion: {user_que}\n\nAnswer the question using the context above."
+        {"id" : f'chunk_{i}' , 
+         "data" : doc.page_content
+         }
+        
+        for i, doc in enumerate(best_docs)
+    ]
     
-    # 5. Get answer from Cohere
-    response = llm.invoke(final_input)
-    return response.content     
+    # generate answer with citations 
+    response = co.chat (
+        message = user_que,
+        documents = document,
+        model = 'command-r-08-2024'
+        )
+    
+    citations_out = []
+    
+    if response.citations:
+        for citation in response.citations:
+            for doc_id in citation.document_ids:
+                index = int(doc_id.split('_')[1])
+                citations_out.append({
+                
+                    "text" : citation.text,
+                    "page" : best_docs[index].metadata.get('page', 'N/A')
+                    }
+                )
+                
+    return response.text , citations_out            
+                 
+    # combine matching into chunk
+    # context = ''
+    # for doc in docs:
+    #     context += doc.page_content + "\n\n"
+        
+    # final_input = f"Context:\n{context}\n\nQuestion: {user_que}\n\nAnswer the question using the context above."
+    
+    # # 5. Get answer from Cohere
+    # response = llm.invoke(final_input)
+    # return response.content     
             
 def main():
     st.set_page_config(page_title='Chat with Documents', page_icon=':books:')
@@ -109,9 +154,15 @@ def main():
         
         if 'vector_store' in st.session_state:
             with st.spinner('Thinking...'):
-                answer = get_user_que(user_que, st.session_state.vector_store)
+                answer , citations= get_user_que(user_que, st.session_state.vector_store)
                 st.write(answer)
                 
+                if citations:
+                    st.subheader('Sources')
+                    for c in citations:
+                        text = c['text']
+                        page = c['page']
+                        st.caption(f' "{text}" - page{page}')
         else:
             st.info("Please upload and process documents in the sidebar first.")
                     
