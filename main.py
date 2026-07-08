@@ -7,8 +7,6 @@ def get_document():
     user_input = st.chat_input('Ask a question' , accept_file='multiple' , file_type='pdf')
     text = ''
     
-    
-    
     # read pdf
     if user_input and user_input.files:
         pdf = user_input.files
