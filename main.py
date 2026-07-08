@@ -1,7 +1,7 @@
 import streamlit as st
 from pypdf import PdfReader
 from langchain_community.document_loaders import WebBaseLoader
-
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 def get_document():
     user_input = st.chat_input('Ask a question' , accept_file='multiple' , file_type='pdf')
@@ -30,10 +30,5 @@ def get_document():
     with st.sidebar:
       
         st.write(text)
-        
-   
-            
-    
-           
+               
 get_document()
-    
