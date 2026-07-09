@@ -3,8 +3,8 @@ from pypdf import PdfReader
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-def get_document():
-    user_input = st.chat_input('Ask a question' , accept_file='multiple' , file_type='pdf')
+def get_document(user_input):
+    # user_input = st.chat_input('Ask a question' , accept_file='multiple' , file_type='pdf')
     text = ''
     
     # read pdf
@@ -27,27 +27,47 @@ def get_document():
         for doc in url:
             text +=doc.page_content
                         
-    with st.sidebar:
-      
-        st.write(text)
     
-    # return text 
+    return text 
 
-get_document()    
+# get_document()    
                
 
 
 def get_chunk(chunk):
     
     text_spliter = RecursiveCharacterTextSplitter(
-        separators=['\n'],
+        # separators= 
         chunk_size = 1000,
-        chunk_overlap = 200
+        chunk_overlap = 200,
+        length_function = len
+
     )
     
     chunks = text_spliter.split_text(chunk)
     
     return chunks
+
+
+def main():
+    st.set_page_config(page_title='Chat with URL & PDF', page_icon=':books:')
+    
+    user_input = st.chat_input('Ask a question', accept_file='multiple', file_type='pdf')
+    
+    with st.sidebar:
+        raw_text = get_document(user_input)
+        
+        if raw_text:
+            st.write(raw_text)
+            chunk_text = get_chunk(raw_text)
+            
+            if chunk_text:
+                st.write(chunk_text)
+    
+    
+if __name__ == '__main__':
+    main()  
+    
     
     
 
