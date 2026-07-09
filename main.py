@@ -30,5 +30,24 @@ def get_document():
     with st.sidebar:
       
         st.write(text)
+    
+    # return text 
+
+get_document()    
                
-get_document()
+
+
+def get_chunk(chunk):
+    
+    text_spliter = RecursiveCharacterTextSplitter(
+        separators=['\n'],
+        chunk_size = 1000,
+        chunk_overlap = 200
+    )
+    
+    chunks = text_spliter.split_text(chunk)
+    
+    return chunks
+    
+    
+
