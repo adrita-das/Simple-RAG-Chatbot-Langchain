@@ -135,10 +135,18 @@ def main():
             vectorStoreUrl =get_embeddigs(chunk_text_url)
             st.session_state.vector_store = vectorStoreUrl  
         
-        if text_input:
-            st.session_state.conversation.append(('user' , text_input))
+        msg = text_input if text_input else ''
+        
+        if pdf_files:
+            for f in pdf_files:
+                msg = ":material/attach_file: " + f.name + "  \n\n" + msg
+                st.write(msg)
+                
+        
+        if msg:
+            st.session_state.conversation.append(('user' , msg))
             with st.chat_message('user'):
-                st.markdown(text_input)
+                st.markdown(msg)
                 
             if 'vector_store' in st.session_state:
                 chain = user_query(st.session_state.vector_store)
