@@ -1,11 +1,14 @@
 import streamlit as st
 import os 
+import cohere
 from pypdf import PdfReader
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from dotenv import load_dotenv
 from langchain_cohere import CohereEmbeddings,ChatCohere
+from langchain_cohere import CohereRerank,CohereRagRetriever
 from langchain_classic.chains import ConversationalRetrievalChain
+from langchain_classic.retrievers import ContextualCompressionRetriever
 from langchain_core.documents import Document
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
@@ -13,7 +16,8 @@ from qdrant_client import QdrantClient
 
 
 load_dotenv()
-COHERE_API_KEY = os.getenv('COHERE_API_KEY')
+# co = cohere.Client(os.getenv('COHERE_API_KEY'))
+# COHERE_API_KEY = os.getenv('COHERE_API_KEY')
 
 # read from pdf 
 
@@ -65,10 +69,9 @@ def get_chunk(chunk):
 def get_embeddigs(chunk_text):
     embeddings = CohereEmbeddings(
         model='embed-english-v3.0',
-         cohere_api_key=os.getenv('COHERE_API_KEY')
+        cohere_api_key=os.getenv('COHERE_API_KEY')
     )
-    
-        
+       
     vector_db = QdrantVectorStore.from_documents(
         documents = chunk_text,
         embedding= embeddings,
@@ -81,7 +84,6 @@ def get_embeddigs(chunk_text):
     
     return vector_db
 
-
 def user_query(vector_store):
     llm = ChatCohere(
         
@@ -92,10 +94,27 @@ def user_query(vector_store):
         
     )
     
+    re_ranking = CohereRerank(
+        cohere_api_key=os.getenv('COHERE_API_KEY'),
+        model = 'rerank-v4.0-pro',
+        top_n = 4    
+        
+    )
+    
+    base_retriever = vector_store.as_retriever(search_kwargs={'k':15})
+    
+    compression_retriever  = ContextualCompressionRetriever(
+        base_compressor=re_ranking,
+        base_retriever = base_retriever
+        
+    )
+    
+    
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm = llm,
-        retriever=vector_store.as_retriever()
+        retriever= compression_retriever
     )
+
     
     return conversation_chain
       
@@ -140,9 +159,7 @@ def main():
         if pdf_files:
             for f in pdf_files:
                 msg = ":material/attach_file: " + f.name + "  \n\n" + msg
-                st.write(msg)
-                
-        
+            
         if msg:
             st.session_state.conversation.append(('user' , msg))
             with st.chat_message('user'):
