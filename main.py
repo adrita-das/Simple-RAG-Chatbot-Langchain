@@ -45,13 +45,14 @@ def get_url(target_url):
     url = []
     
     if target_url:
-        try:
-            read_url = WebBaseLoader(web_paths=[target_url])
-            url.extend(read_url.load())
-            
-        except Exception:
-            pass
-             
+        
+        if not target_url.startswith(("http://", "https://")):
+            return url
+        
+        read_url = WebBaseLoader(web_paths=[target_url])
+        url.extend(read_url.load())
+            # print(target_url)   
+                   
     return url    
 
 # create chunk
@@ -77,7 +78,7 @@ def get_embeddigs(chunk_text):
         embedding= embeddings,
         location=':memory:',
         #path= 'qdrant_storage',
-        collection_name='rag_collection',
+        collection_name='new_rag_collection',
         force_recreate=True
             
     )
@@ -120,6 +121,7 @@ def user_query(vector_store):
       
 def main():
     st.set_page_config(page_title='Chat with URL & PDF', page_icon=':books:')
+    st.header(' :books: Retrieval Augmented Generation (RAG)')
     
     
     if 'conversation' not in st.session_state:
@@ -134,7 +136,7 @@ def main():
 
                         
     user_input = st.chat_input('Ask a question', accept_file='multiple', file_type='pdf' , key='url')
-    
+        
     if user_input:
         pdf_files = user_input.files      
         text_input = user_input.text
@@ -146,15 +148,20 @@ def main():
              vectorStore = get_embeddigs(chunk_text)
              st.session_state.vector_store = vectorStore
             
-
+        
         raw_text_url = get_url(text_input)  
         
         if raw_text_url:
             chunk_text_url = get_chunk(raw_text_url)
             vectorStoreUrl =get_embeddigs(chunk_text_url)
-            st.session_state.vector_store = vectorStoreUrl  
-        
+            st.session_state.vector_store = vectorStoreUrl
+            
+            
+        # if text_input and text_input.startswith('http') and ' ' in text_input:
+            
         msg = text_input if text_input else ''
+        # msg = text_input
+        # msg = user_input
         
         if pdf_files:
             for f in pdf_files:
