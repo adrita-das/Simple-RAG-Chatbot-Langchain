@@ -51,6 +51,7 @@ Display answer + source page numbers
 | PDF parsing | PyPDF |
 | Web loading | LangChain WebBaseLoader |
 | Chunking | LangChain RecursiveCharacterTextSplitter |
+| Conversation | LangChain ConversationalRetrievalChain |
 
 ---
 
