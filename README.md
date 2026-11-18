@@ -51,6 +51,7 @@ Display answer + source page numbers
 | PDF parsing | PyPDF |
 | Web loading | LangChain WebBaseLoader |
 | Chunking | LangChain RecursiveCharacterTextSplitter |
+| Conversation | LangChain ConversationalRetrievalChain |
 
 ---
 
@@ -107,7 +108,7 @@ Open your browser at `http://localhost:8501`
 
 ```
 rag-streamlit-app/
-├── app.py              # main Streamlit application
+├── main.py              # main Streamlit application
 ├── requirements.txt    # Python dependencies
 ├── .env                # API keys (not committed)
 ├── .gitignore
