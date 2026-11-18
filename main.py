@@ -13,8 +13,6 @@ from langchain_core.documents import Document
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 
-
-
 load_dotenv()
 # co = cohere.Client(os.getenv('COHERE_API_KEY'))
 # COHERE_API_KEY = os.getenv('COHERE_API_KEY')
@@ -141,36 +139,29 @@ def main():
         pdf_files = user_input.files      
         text_input = user_input.text
         
-        raw_text = get_document(pdf_files)
-        
-        if raw_text:
-             chunk_text = get_chunk(raw_text)
-             vectorStore = get_embeddigs(chunk_text)
-             st.session_state.vector_store = vectorStore
-            
-        
-        raw_text_url = get_url(text_input)  
-        
-        if raw_text_url:
-            chunk_text_url = get_chunk(raw_text_url)
-            vectorStoreUrl =get_embeddigs(chunk_text_url)
-            st.session_state.vector_store = vectorStoreUrl
-            
-            
-        # if text_input and text_input.startswith('http') and ' ' in text_input:
-            
         msg = text_input if text_input else ''
-        # msg = text_input
-        # msg = user_input
-        
+            
+
         if pdf_files:
             for f in pdf_files:
                 msg = ":material/attach_file: " + f.name + "  \n\n" + msg
             
         if msg:
+                
             st.session_state.conversation.append(('user' , msg))
             with st.chat_message('user'):
                 st.markdown(msg)
+                
+            with st.spinner('Reading and indexing your source...'):   
+                raw_text = get_document(pdf_files)
+                if raw_text:
+                    chunk_text = get_chunk(raw_text)
+                    st.session_state.vector_store = get_embeddigs(chunk_text)
+
+                raw_text_url = get_url(text_input)
+                if raw_text_url:
+                    chunk_text_url = get_chunk(raw_text_url)
+                    st.session_state.vector_store = get_embeddigs(chunk_text_url) 
                 
             if 'vector_store' in st.session_state:
                 chain = user_query(st.session_state.vector_store)
