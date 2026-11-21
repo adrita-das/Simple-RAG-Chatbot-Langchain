@@ -27,14 +27,11 @@ Upload any PDF or paste a web URL, then ask questions about the content in plain
 User question
       ↓
 Embed question (Cohere embed-english-v3.0)
-      ↓
-Retrieve top 15 chunks (Qdrant local in-memory)
-      ↓
-Rerank to top 4 (Cohere rerank-v4.0-pro)
+      
       ↓
 Generate answer with citations (Cohere command-r-08-2024)
       ↓
-Display answer + source page numbers
+Display answer
 ```
 
 ---
@@ -46,61 +43,20 @@ Display answer + source page numbers
 | Frontend | Streamlit |
 | Embeddings | Cohere `embed-english-v3.0` |
 | Vector store | Qdrant (local in-memory mode) |
-| Reranking | Cohere `rerank-v4.0-pro` |
 | LLM | Cohere `command-r-08-2024` |
 | PDF parsing | PyPDF |
 | Web loading | LangChain WebBaseLoader |
 | Chunking | LangChain RecursiveCharacterTextSplitter |
 | Conversation | LangChain ConversationalRetrievalChain |
 
----
 
-## Getting started
-
-### Prerequisites
-- Python 3.10+
-- A free [Cohere API key](https://cohere.com) (no credit card required)
-
-### Installation
-
-```bash
-# Clone the repo
-git clone https://github.com/adrita-das/rag-streamlit-app.git
-cd rag-streamlit-app
-
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate        # Mac/Linux
-# venv\Scripts\activate         # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### Configuration
-
-Create a `.env` file in the project root:
-
-```
-COHERE_API_KEY=your_cohere_api_key_here
-```
-
-### Run the app
-
-```bash
-streamlit run app.py
-```
-
-Open your browser at `http://localhost:8501`
-
----
 
 ## Usage
 
 1. **Upload documents** — use the sidebar to upload one or more PDFs, or paste a web URL
 2. **Click Process** — the app chunks, embeds, and indexes your documents
 3. **Ask questions** — type in the chat box and press Enter
-4. **View sources** — expand the Sources section under each answer to see which pages were cited
+
 
 ---
 
